@@ -1,0 +1,19 @@
+print(len(verses))
+        
+        first:str = ''
+        second:str = ''
+
+        if translate == False :
+            return lyrics
+        else : 
+            if len(verses)  > 20 : 
+                for i in range(0 , len(verses)) : 
+                    if i < len(verses)/2  :
+                        first  += verses[i] + "\n" + "<blockquote>" + versesTrans[i] + "</blockquote>\n"
+                    else : 
+                        second += verses[i] + "\n" + "<blockquote>" + versesTrans[i] + "</blockquote>\n"
+                return [first , second]
+            else : 
+                for i in range(0 , len(verses)) : 
+                     first  += verses[i] + "\n" + "<blockquote>" + versesTrans[i] + "</blockquote>\n"
+                return [first]
