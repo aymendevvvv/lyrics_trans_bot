@@ -34,7 +34,7 @@ async def get_mp3(update:Update , context:ContextTypes.DEFAULT_TYPE , txt:str = 
         print(resp.content)
         audioFile = resp.content
         await update.message.reply_audio( write_timeout=300, read_timeout=300 , pool_timeout=300 ,   audio=audioFile )
-        parts = getLyricsByQuery(extract_title(audioFile) , True)
+        parts = ovhApiLyrics(extract_title(audioFile) , True)
         for part in parts : 
             await update.message.reply_text( " ".join(part)  , parse_mode='HTML')
     else :
@@ -49,7 +49,7 @@ async def handle_text(update:Update , context:ContextTypes.DEFAULT_TYPE):
 
 
 async def get_lyrics(update:Update , context:ContextTypes.DEFAULT_TYPE):
-    parts = getLyricsByQuery(" ".join(context.args) , True)
+    parts = ovhApiLyrics(" ".join(context.args) , True)
     for part in parts : 
         await update.message.reply_text( " ".join(part)  , parse_mode='HTML')
     
