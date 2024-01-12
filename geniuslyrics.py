@@ -64,8 +64,9 @@ def ovhApiLyrics(search , translate= False):
     }
 
     response = requests.get(f'https://api.lyrics.ovh/suggest/{search}', headers=headers)
+
     if response.json()['total'] == 0 :
-        return 
+        return ['no lyrics were found']
     else : 
         
         info = response.json()['data'][0]
@@ -74,33 +75,35 @@ def ovhApiLyrics(search , translate= False):
         #implement this later to get more search results , for now we're just taking the first one
         #info_tuple = (artist , title) 
         sec_resp = requests.get(f'https://api.lyrics.ovh/v1/{artist}/{title}', headers=headers)
-        lyrics = sec_resp.json()['lyrics']
-
-        noHeading = re.sub('\[(.*?)\]' , '' , lyrics)
         
-        verses = noHeading.split("\n")
-        verses = [element for element in verses[1:-1] if element.strip()]
-        versesTrans = trans.translate(noHeading).text.split("\n")
-        versesTrans = [element for element in versesTrans[1:-1] if element.strip()]
+        if 'lyrics' in sec_resp.json() :
+            lyrics = sec_resp.json()['lyrics']
+            noHeading = re.sub('\[(.*?)\]' , '' , lyrics)
+            
+            verses = noHeading.split("\n")
+            verses = [element for element in verses[1:-1] if element.strip()]
+            versesTrans = trans.translate(noHeading).text.split("\n")
+            versesTrans = [element for element in versesTrans[1:-1] if element.strip()]
 
-        first:str = ''
-        second:str = ''
+            first:str = ''
+            second:str = ''
 
-        if not translate:
-            return [lyrics]
-        else:
-            result = []
-            blockquote_format = "<blockquote>{}</blockquote>\n"
-
-            if len(verses) > 20:
-                mid_point = len(verses) // 2
-                first = [verse + "\n" + blockquote_format.format(verseTrans) for i, (verse, verseTrans) in enumerate(zip(verses[:mid_point], versesTrans[:mid_point]))]
-                second = [verse + "\n" + blockquote_format.format(verseTrans) for i, (verse, verseTrans) in enumerate(zip(verses[mid_point:], versesTrans[mid_point:]))]
-                result.extend([first, second])
+            if not translate:
+                return [lyrics]
             else:
-                result.extend([verse + "\n" + blockquote_format.format(verseTrans) for verse, verseTrans in zip(verses, versesTrans)])
+                result = []
+                blockquote_format = "<blockquote>{}</blockquote>\n"
 
-            return result
+                if len(verses) > 20:
+                    mid_point = len(verses) // 2
+                    first = [verse + "\n" + blockquote_format.format(verseTrans) for i, (verse, verseTrans) in enumerate(zip(verses[:mid_point], versesTrans[:mid_point]))]
+                    second = [verse + "\n" + blockquote_format.format(verseTrans) for i, (verse, verseTrans) in enumerate(zip(verses[mid_point:], versesTrans[mid_point:]))]
+                    result.extend([first, second])
+                else:
+                    result.extend([verse + "\n" + blockquote_format.format(verseTrans) for verse, verseTrans in zip(verses, versesTrans)])
 
+                return result
+        else : 
+            return ['no lyrics were found']
 
 
