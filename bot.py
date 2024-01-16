@@ -1,9 +1,10 @@
 from telegram import Update  
-from telegram import InputMedia , InputMediaAudio , InputMediaDocument 
-from telegram.ext import CommandHandler  , ApplicationBuilder , ContextTypes , MessageHandler , filters
+from telegram import InputMedia , InputMediaAudio , InputMediaDocument ,  InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import CommandHandler  , ApplicationBuilder , ContextTypes , MessageHandler , filters , CallbackQueryHandler
 import requests , io
 from mutagen.id3 import ID3
 from geniuslyrics import *
+from lyricsdotcom import search
 
 from typing import final
 from musicHandler import getDownUrl
@@ -26,6 +27,34 @@ def split_text(text):
 
 async def start_command(update:Update , context:ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("i'm alive yay")
+
+async def test_keyboard(update:Update  , context:ContextTypes.DEFAULT_TYPE) :
+    results = search(context.args[0])
+
+    keyboard_element = [ InlineKeyboardButton(f"{result['term']}" , callback_data = f"{result['link']}") for result in results]
+    keyboard = []
+    keyboard.append(keyboard_element)
+    #keyboard = [
+    #    [
+    #        InlineKeyboardButton("Option 1", callback_data="1"),
+    #        InlineKeyboardButton("Option 2", callback_data="2"),
+    #    ],
+    #    [InlineKeyboardButton("Option 3", callback_data="3")],
+    #]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("chose one : " , reply_markup=reply_markup )
+
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Parses the CallbackQuery and updates the message text."""
+    query = update.callback_query
+
+    # CallbackQueries need to be answered, even if no notification to the user is needed
+    # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
+    await query.answer()
+
+    await query.edit_message_text(text=f"Selected option: {query.data}")
+
 
 async def get_mp3(update:Update , context:ContextTypes.DEFAULT_TYPE , txt:str = None):
     
@@ -54,7 +83,7 @@ async def get_lyrics(update:Update , context:ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text( " ".join(part)  , parse_mode='HTML')
     
     
-        
+
         
 
 
@@ -72,6 +101,9 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler('start' , start_command ))
     app.add_handler(CommandHandler('get_mp3' , get_mp3 , has_args=True))
     app.add_handler(CommandHandler('get_lyrics' , get_lyrics ))
+    app.add_handler(CommandHandler('test_keyboard' , test_keyboard ))
+    app.add_handler(CallbackQueryHandler(button))
+    
     app.add_handler(MessageHandler(filters.TEXT , handle_text))
     
 

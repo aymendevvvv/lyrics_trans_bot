@@ -1,4 +1,5 @@
 import requests
+from bs4 import BeautifulSoup
 '''
     ## need to scrape with beautiful soup later , better results ##
 '''
@@ -43,6 +44,20 @@ headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
 }
 
-response = requests.get('https://www.lyrics.com/lyric-lf/5914866/AYLIVA/Immer+kalt', cookies=cookies, headers=headers)
+def get_lyrics():
+    response = requests.get('https://www.lyrics.com/lyric-lf/5914866/AYLIVA/Immer+kalt', cookies=cookies, headers=headers)
+        
+    soup = BeautifulSoup(response.content , "html.parser")
+    lyrics_tag = soup.find('pre', {'id': 'lyric-body-text'})
+    print(lyrics_tag.text)
+    
+def search(query) :
 
-print(response.content)
+    data = {
+        'action': 'get_ac',
+        'term': query,
+        'type': '1',
+    }
+
+    response = requests.post('https://www.lyrics.com/gw.php', cookies=cookies, headers=headers, data=data)
+    return response.json()
