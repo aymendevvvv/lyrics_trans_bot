@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from googletrans import Translator
 '''
     ## need to scrape with beautiful soup later , better results ##
 '''
@@ -43,13 +44,40 @@ headers = {
     'upgrade-insecure-requests': '1',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
 }
+userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-def get_lyrics():
-    response = requests.get('https://www.lyrics.com/lyric-lf/5914866/AYLIVA/Immer+kalt', cookies=cookies, headers=headers)
+trans = Translator(timeout=1000000 , user_agent=userAgent)
+
+def get_lyricsdotcom(url):
+    response = requests.get(url, cookies=cookies, headers=headers)
         
     soup = BeautifulSoup(response.content , "html.parser")
     lyrics_tag = soup.find('pre', {'id': 'lyric-body-text'})
-    print(lyrics_tag.text)
+    return lyrics_tag.text
+
+def get_lyricsdotcom_t(url) :
+    response = requests.get(url, cookies=cookies, headers=headers)
+        
+    soup = BeautifulSoup(response.content , "html.parser")
+    lyrics_text = soup.find('pre', {'id': 'lyric-body-text'}).text
+
+    verses = lyrics_text.split("\n")
+    verses = [verse for verse in verses if verse.strip()]
+
+    versesTrans = trans.translate(lyrics_text).text.split("\n")
+    versesTrans = [f"<blockquote>{verse}</blockquote>" for verse in versesTrans if verse.strip()]
+
+    result = []
+
+    if len(verses) > 15:
+        mid_point = len(verses) // 2
+        first = [verse + "\n" + verseTrans for i, (verse, verseTrans) in enumerate(zip(verses[:mid_point], versesTrans[:mid_point]))]
+        second = [verse + "\n" + verseTrans for i, (verse, verseTrans) in enumerate(zip(verses[mid_point:], versesTrans[mid_point:]))]
+        result.extend([first, second])
+    else:
+        result.extend([verse + "\n" + verseTrans for verse, verseTrans in zip(verses, versesTrans)])
+
+    return result
     
 def search(query) :
 
@@ -60,4 +88,23 @@ def search(query) :
     }
 
     response = requests.post('https://www.lyrics.com/gw.php', cookies=cookies, headers=headers, data=data)
+    print(response.text)
     return response.json()
+
+
+def get_songs_for(artist:str =None):
+    url_comp = artist.split('/')
+    m_url = f'https://www.lyrics.com/artist.php?name={url_comp[-2]}&aid={url_comp[-1]}&o=1'
+    response = requests.get(m_url, cookies=cookies, headers=headers)
+    soup = BeautifulSoup(response.text , "html.parser")
+    
+    tbody_tag = soup.find('div' , class_='tdata-ext').find('tbody')
+    result = []
+    for song in tbody_tag.find_all('tr'): 
+        td_tag = song.find('a')
+        result.append((td_tag.text, td_tag.get('href') , ))
+    
+
+    return result
+#print(search("wie"))
+#print(get_songs_for("https://www.lyrics.com/artist/Nimo/2655362"))

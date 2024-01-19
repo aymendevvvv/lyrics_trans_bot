@@ -14,23 +14,23 @@ def getId(down_url):
 
 def getDownUrl(youtube_link):
     headers = {
-        'authority': 'co.wuk.sh',
+        'authority': 'us3-co.wuk.sh',
         'accept': 'application/json',
         'accept-language': 'en-US,en;q=0.9',
         'content-type': 'application/json',
         'origin': 'https://cobalt.tools',
         'referer': 'https://cobalt.tools/',
-        'sec-ch-ua': '"Chromium";v="118", "Google Chrome";v="118", "Not=A?Brand";v="99"',
+        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
         'sec-ch-ua-mobile': '?0',
         'sec-ch-ua-platform': '"Windows"',
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'cross-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     }
 
     json_data = {
-        'url': f"https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D{getId(youtube_link)}",
+        'url': youtube_link,
         'aFormat': 'mp3',
         'filenamePattern': 'classic',
         'dubLang': False,
@@ -38,7 +38,8 @@ def getDownUrl(youtube_link):
         'isNoTTWatermark': True,
     }
 
-    response = requests.post('https://co.wuk.sh/api/json', headers=headers, json=json_data)
+    response = requests.post('https://us3-co.wuk.sh/api/json', headers=headers, json=json_data)
+
     print("Download url : ", response.json()["url"])
     return response.json()["url"]
 
@@ -79,5 +80,6 @@ def get_title(file_path):
     
 #link = input("insert the youtube link :")
 #save_audio(link)
+getDownUrl("https://www.youtube.com/watch?v=N8SHoW-E3e4&pp=ygUNc2FnIG1pciBuaWNodA%3D%3D")
 
 
