@@ -1,9 +1,8 @@
 from telegram import Update  
-from telegram import InputMedia , InputMediaAudio , InputMediaDocument ,  InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import   InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler  , ApplicationBuilder , ContextTypes , MessageHandler , filters , CallbackQueryHandler , ConversationHandler
 import requests , io , logging , traceback , html , json # these are just for error handeling , remove later
 from mutagen.id3 import ID3
-from geniuslyrics import *
 from lyricsdotcom import *
 from urlHandler import URLShortener
 from typing import final
@@ -15,7 +14,7 @@ BOT_TOKEN:final = '6312020010:AAHfqBT5cjEkRKHH3FhsCGbnDCbifOr6wAw'
 CHAT_ID:final = 6322389290
 # Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.WARNING
 )
 # set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -29,9 +28,6 @@ def extract_title(mp3_binary):
     title_frame = next((frame for frame_id, frame in tags if frame_id == 'TIT2'), None)
     return title_frame.text[0].split("(")[0]
 
-def split_text(text):
-    midpoint = len(text) // 2
-    return text[:midpoint], text[midpoint:]
 
 
 
@@ -39,13 +35,7 @@ async def start_command(update:Update , context:ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("i'm alive yay")
 
 async def manual_search(update:Update  , context:ContextTypes.DEFAULT_TYPE) :
-    #keyboard = [
-    #    [
-    #        InlineKeyboardButton("Option 1", callback_data="1"),
-    #        InlineKeyboardButton("Option 2", callback_data="2"),
-    #    ],
-    #    [InlineKeyboardButton("Option 3", callback_data="3")],
-    #]
+
     results = search(str(context.args[0]))
     dict = {i+1:result['link'] for i , result in enumerate(results) }
     print(dict)
@@ -61,8 +51,6 @@ async def manual_search(update:Update  , context:ContextTypes.DEFAULT_TYPE) :
                                     write_timeout=30 , 
                                     connect_timeout=30 ,
                                     )
-
-
 
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
@@ -115,32 +103,30 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
 
 async def get_mp3(update:Update , context:ContextTypes.DEFAULT_TYPE , txt:str = None):
-    
-    if txt : 
-        resp = requests.get(getDownUrl(txt))
-        print(resp.content)
-        audioFile = resp.content
-        await update.message.reply_audio( write_timeout=300, read_timeout=300 , pool_timeout=300 ,   audio=audioFile )
-        parts = ovhApiLyrics(extract_title(audioFile) , True)
-        for part in parts : 
-            await update.message.reply_text( " ".join(part)  , parse_mode='HTML')
-    else :
-        resp = requests.get(getDownUrl("".join(context.args)))
-        await update.message.reply_audio( write_timeout=300, read_timeout=300 , pool_timeout=300 ,   audio=resp.content )
+    # works both with command or with plain link 
+    ytb_link = context.args[0] if context.args is not None  else update.message.text
 
+    resp = requests.get(getDownUrl(ytb_link))
+    await update.message.reply_audio( write_timeout=300, read_timeout=300 , pool_timeout=300 ,   audio=resp.content )
+    #return the title 
+    return extract_title(resp.content)
 
 async def handle_text(update:Update , context:ContextTypes.DEFAULT_TYPE):
     print("handeled")
-    text = update.message.text
-    await get_mp3(update , context , text)
+    print(f"update : {update} context : {context.args}")
+    title = await get_mp3(update , context )
+    await get_lyrics(update , context  , title)
 
 
-async def get_lyrics(update:Update , context:ContextTypes.DEFAULT_TYPE):
-    parts = ovhApiLyrics(" ".join(context.args) , True)
+async def get_lyrics(update:Update , context:ContextTypes.DEFAULT_TYPE  , ytb_title = None):
+    link = context.args[0] if context.args is not None  else update.message.text
+    if ytb_title != None :
+        link = get_top_result(ytb_title)
 
-    for part in parts : 
-        await update.message.reply_text( " ".join(part)  , parse_mode='HTML')
-    
+    lyrics = get_lyricsdotcom_t(link)
+    for part in lyrics :
+        await update.message.reply_text(text=" ".join(part) , parse_mode='HTML')
+
     
 
     

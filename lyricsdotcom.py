@@ -1,4 +1,4 @@
-import requests
+import requests , difflib
 from bs4 import BeautifulSoup
 from googletrans import Translator
 '''
@@ -47,6 +47,10 @@ headers = {
 userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 trans = Translator(timeout=1000000 , user_agent=userAgent)
+def compare (text1, text2):
+    # Calculate the similarity ratio between two texts
+    similarity_ratio = difflib.SequenceMatcher(None, text1, text2).ratio()
+    return similarity_ratio
 
 def get_lyricsdotcom(url):
     response = requests.get(url, cookies=cookies, headers=headers)
@@ -91,6 +95,46 @@ def search(query) :
     print(response.text)
     return response.json()
 
+def get_top_result(query):
+    response = requests.get(f'https://www.lyrics.com/lyrics/{query}', cookies=cookies, headers=headers, )
+    soup = BeautifulSoup(response.content , "html.parser")
+    
+    tbody = soup.select_one('#content-body > div > div:nth-child(3)').find('tbody')
+    tds = tbody.find_all('td')
+    sim = 0
+    print("all artist : ")
+    for i  in range(0 , len(tds)) :
+        print(tds[i].text)
+        currsim = compare( query , tds[i].text)
+        if currsim >sim :
+            sim = currsim 
+            j = i
+    
+    relv_artist = tds[j]
+    songs = get_songs_for(f"https://www.lyrics.com/{relv_artist.select_one('a').get('href')}")
+    sim = 0
+    relv_song = None
+    # removing artist name from query 
+    artist_name = relv_artist.text
+    words = artist_name.split()
+    for word in words :
+        query = query.replace(word , "")
+    print("all his songs")
+    for song in songs :
+        currsim = compare(query  , song[0])
+        print(song[0] , " -> " , currsim) 
+        if currsim > sim :
+            sim = currsim
+            relv_song = song[1]
+    print("most relavent song" , relv_song)
+    return 'https://www.lyrics.com'+relv_song
+
+
+
+        
+
+    
+
 
 def get_songs_for(artist:str =None):
     url_comp = artist.split('/')
@@ -108,3 +152,4 @@ def get_songs_for(artist:str =None):
     return result
 #print(search("wie"))
 #print(get_songs_for("https://www.lyrics.com/artist/Nimo/2655362"))
+get_top_result("nina chuba neben mir")
