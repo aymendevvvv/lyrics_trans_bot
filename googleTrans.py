@@ -2,6 +2,6 @@ from googletrans import Translator
 
 trans = Translator()
 
-text:str = "hallo wie geht's "
+text:str = " hola me amigos"
 
 print(trans.translate(text).text)

@@ -1,12 +1,15 @@
 from telegram import Update  
+from telegram import error 
 from telegram import   InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler  , ApplicationBuilder , ContextTypes , MessageHandler , filters , CallbackQueryHandler , ConversationHandler
-import requests , io , logging , traceback , html , json # these are just for error handeling , remove later
-from mutagen.id3 import ID3
+import requests  , logging , traceback , html , json # these are just for error handeling , remove later
+
 from lyricsdotcom import *
 from urlHandler import URLShortener
 from typing import final
-from musicHandler import getDownUrl
+from cobaltApi import audioOnlyDownload
+
+from myRegex import is_youtube_link  , extract_title
 
 # Telegram Bot token
 BOT_TOKEN:final = '6312020010:AAHfqBT5cjEkRKHH3FhsCGbnDCbifOr6wAw'
@@ -22,12 +25,6 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 url_shortner = URLShortener()
-
-def extract_title(mp3_binary):
-    tags = ID3(io.BytesIO(mp3_binary)).items()
-    title_frame = next((frame for frame_id, frame in tags if frame_id == 'TIT2'), None)
-    return title_frame.text[0].split("(")[0]
-
 
 
 
@@ -78,7 +75,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if 'www.lyrics.com' not in answerurl :
             answerurl = 'https://www.lyrics.com' + answerurl
 
-        lyrics = get_lyricsdotcom_t(answerurl)
+        lyrics = get_lyrics_t(answerurl)
         for part in lyrics :
             await query.edit_message_text(text=" ".join(part) , parse_mode='HTML')
     else : 
@@ -102,20 +99,23 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     
 
-async def get_mp3(update:Update , context:ContextTypes.DEFAULT_TYPE , txt:str = None):
-    # works both with command or with plain link 
-    ytb_link = context.args[0] if context.args is not None  else update.message.text
-
-    resp = requests.get(getDownUrl(ytb_link))
-    await update.message.reply_audio( write_timeout=300, read_timeout=300 , pool_timeout=300 ,   audio=resp.content )
-    #return the title 
-    return extract_title(resp.content)
 
 async def handle_text(update:Update , context:ContextTypes.DEFAULT_TYPE):
     print("handeled")
     print(f"update : {update} context : {context.args}")
-    title = await get_mp3(update , context )
-    await get_lyrics(update , context  , title)
+
+    if is_youtube_link(update.message.text):
+        songBytes = audioOnlyDownload(update.message.text)
+        title = extract_title(songBytes)
+        try:
+            await update.message.reply_audio(audio=songBytes, title=title, read_timeout=300, write_timeout=300, pool_timeout=300)
+        except error.TimedOut:
+            await update.message.reply_text("Sorry, the request timed out. Please try again.")
+        except Exception as e:
+            await update.message.reply_text(f"An error occurred: {e}")
+    else : 
+        await update.message.reply_text("hi")
+        await update.message.reply_text("please enter a valid youtube link")
 
 
 async def get_lyrics(update:Update , context:ContextTypes.DEFAULT_TYPE  , ytb_title = None):
@@ -123,7 +123,7 @@ async def get_lyrics(update:Update , context:ContextTypes.DEFAULT_TYPE  , ytb_ti
     if ytb_title != None :
         link = get_top_result(ytb_title)
 
-    lyrics = get_lyricsdotcom_t(link)
+    lyrics = get_lyrics_t(link)
     for part in lyrics :
         await update.message.reply_text(text=" ".join(part) , parse_mode='HTML')
 
@@ -140,6 +140,8 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
     tb_string = "".join(tb_list)
 
+    print("traceback list  :" , tb_list)
+
     # Build the message with some markup and additional information about what happened.
     # You might need to add some logic to deal with messages longer than the 4096 character limit.
     update_str = update.to_dict() if isinstance(update, Update) else str(update)
@@ -151,10 +153,18 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         f"<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n"
         f"<pre>{html.escape(tb_string)}</pre>"
     )
+    short_message = (
+        "An exception was raised while handling an update\n"
+        f"<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}"
+        "</pre>\n\n"
+        f"<pre>{html.escape(tb_list[-1])}</pre>"
+    )
+    
 
+    
     # Finally, send the message
     await context.bot.send_message(
-        chat_id=CHAT_ID, text=message, parse_mode='HTML'
+        chat_id=CHAT_ID, text=short_message, parse_mode='HTML'
     )
 
 if __name__ == '__main__':
@@ -164,7 +174,6 @@ if __name__ == '__main__':
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler('start' , start_command ))
-    app.add_handler(CommandHandler('get_mp3' , get_mp3 , has_args=True))
     app.add_handler(CommandHandler('get_lyrics' , get_lyrics ))
     app.add_handler(CommandHandler('manual_search' , manual_search ))
     app.add_handler(CallbackQueryHandler(button))

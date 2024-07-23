@@ -1,69 +1,62 @@
 import requests , difflib
 from bs4 import BeautifulSoup
 from googletrans import Translator
-'''
-    ## need to scrape with beautiful soup later , better results ##
-'''
+
+
 cookies = {
-    'PHPSESSID': '0hcuiacvl0pskfv6un9srqtr26',
-    '_uc_referrer': 'https://www.reddit.com/',
-    '_gid': 'GA1.2.1171095024.1705076082',
-    '_au_1d': 'AU1D-0100-001705076154-6ECFOLBL-79RZ',
-    'DAPROPS': '"bS:0|scsVersion:2.4.5|bcookieSupport:1|bcss.animations:1|bcss.columns:1|bcss.transforms:1|bcss.transitions:1|sdeviceAspectRatio:1366/768|sdevicePixelRatio:1|idisplayColorDepth:24|sdownlink:5.15|seffectiveConnectionType:4g|bflashCapable:0|bhtml.audio.ogg:1|bhtml.audio.mp3:1|bhtml.audio.wav:1|bhtml.audio.m4a:1|bhtml.canvas:1|bhtml.inlinesvg:1|bhtml.svg:1|bhtml.video.ap4x:0|bhtml.video.av1:1|bhtml.video.ogg:1|bhtml.video.h264:1|bhtml.video.webm:1|bjs.accessDom:1|bjs.applicationCache:0|bjs.deviceMotion:1|bjs.geoLocation:1|bjs.indexedDB:1|bjs.json:1|bjs.localStorage:1|bjs.modifyCss:1|bjs.modifyDom:1|bjs.querySelector:1|bjs.sessionStorage:1|bjs.supportBasicJavaScript:1|bjs.supportConsoleLog:1|bjs.supportEventListener:1|bjs.supportEvents:1|bjs.webGl:1|sjs.webGlRenderer:ANGLE (Intel, Intel(R) UHD Graphics 620 (0x00005917) Direct3D11 vs_5_0 ps_5_0, D3D11)|bjs.webSockets:1|bjs.webSqlDatabase:0|bjs.webWorkers:1|bjs.xhr:1|srendererRef:0236014205|iroundTripTime:150|bsaveData:0|sscreenWidthHeight:1366/768|stimeZone:Africa/Lagos|buserMedia:1|sch.bitness:64|sch.browserFullVersionList:%22Not_A%20Brand%22%3Bv%3D%228.0.0.0%22%2C%20%22Chromium%22%3Bv%3D%22120.0.6099.217%22%2C%20%22Google%20Chrome%22%3Bv%3D%22120.0.6099.217%22|sch.browserList:%22Not_A%20Brand%22%3Bv%3D%228%22%2C%20%22Chromium%22%3Bv%3D%22120%22%2C%20%22Google%20Chrome%22%3Bv%3D%22120%22|sch.model:|sch.platform:%22Windows%22|sch.platformVersion:%2210.0.0%22|splatformArchitecture:x86|srequestingMobileUx:false|saudioRef:781311942|bmouseActivity:1bE:0"',
-    '_pbjs_userid_consent_data': '3524755945110770',
-    '_lr_retry_request': 'true',
-    '_lr_env_src_ats': 'false',
-    'pbjs-unifiedid': '%7B%22TDID_LOOKUP%22%3A%22FALSE%22%2C%22TDID_CREATED_AT%22%3A%222024-01-12T16%3A15%3A59%22%7D',
-    'pbjs-unifiedid_last': 'Fri%2C%2012%20Jan%202024%2016%3A15%3A58%20GMT',
-    'panoramaId_expiry': '1705680959459',
-    '_cc_id': 'ec7862325a70812d471e9cfcc7d7541',
-    'panoramaId': '3fd50b2552be9f3c8b632c56641916d5393802754ea4de3baefe39ebfed09b5b',
-    '_au_last_seen_pixels': 'eyJhcG4iOjE3MDUwNzYxNTQsInR0ZCI6MTcwNTA3NjE1NCwicHViIjoxNzA1MDc2MTU0LCJydWIiOjE3MDUwNzYxNTQsInRhcGFkIjoxNzA1MDc2MTU0LCJhZHgiOjE3MDUwNzYxNTQsImdvbyI6MTcwNTA3NjE1NCwiY29sb3NzdXMiOjE3MDUwNzYxNTQsImFkbyI6MTcwNTA3NjE1NCwiaW1wciI6MTcwNTA3NjE1NCwic21hcnQiOjE3MDUwNzYxNjUsInVucnVseSI6MTcwNTA3NjE2NSwiYW1vIjoxNzA1MDc2MTY1LCJzb24iOjE3MDUwNzYxNjUsIm9wZW54IjoxNzA1MDc2MTY1LCJiZWVzIjoxNzA1MDc2MTY1LCJ0YWJvb2xhIjoxNzA1MDc2MTY1LCJwcG50IjoxNzA1MDc2MTY1fQ%3D%3D',
-    '__gads': 'ID=491671c03721f7ed:T=1705076084:RT=1705078002:S=ALNI_Mb95EQmiP58KjPskiR5f2Xdkv6Unw',
-    '__gpi': 'UID=00000cf4b889c6c3:T=1705076084:RT=1705078002:S=ALNI_Max5q5i7BhXtGFwEUmzIhf9yRIh_Q',
-    'AWSALB': 'UiPlT0+nw7r6N2D5wnC6g+6ChOH/rNfBpzoCtwcUEZBxfLaY8/bVHWbAnCErROkMluxB0MCvsFtOkQR9M9kRv5sbZtU0ZZOxn5HlBp23iY6vgdTywsqwfreB0jmZ',
-    'AWSALBCORS': 'UiPlT0+nw7r6N2D5wnC6g+6ChOH/rNfBpzoCtwcUEZBxfLaY8/bVHWbAnCErROkMluxB0MCvsFtOkQR9M9kRv5sbZtU0ZZOxn5HlBp23iY6vgdTywsqwfreB0jmZ',
-    '_ga': 'GA1.2.2061274602.1705076082',
-    '_ga_PSSTD0FYS1': 'GS1.1.1705076081.1.1.1705078058.0.0.0',
-    'FCNEC': '%5B%5B%22AKsRol8ZNeiUvUTj9R7AbP05AHOTnl6Pcd3ZCdY52vtTaph0EcPZ417Yf0QWSGS--MlYEfGSwEphuGhuAF_QA1SBACBtyfBR2B7fuvFD61DvYHJmV6NWN67BgUjE27518M6bE_HMzXv7xGmKa9T_Ub5j58ApBVhUIw%3D%3D%22%5D%2Cnull%2C%5B%5B5%2C%2281%22%5D%5D%5D',
+    'PHPSESSID': 'le2qa9s7r7eg2s3ccmmm6c82pk',
+    '_gid': 'GA1.2.27592484.1721753720',
+    '_au_1d': 'AU1D-0100-001721754568-NZHKQ37C-5STF',
+    '_ga_FVWZ0RM4DH': 'GS1.1.1721754881.1.0.1721754881.60.0.0',
+    '_gat_gtag_UA_172613_15': '1',
+    '__gads': 'ID=7535256d1197ccc2:T=1721753717:RT=1721754886:S=ALNI_MbMVXToGJihZPKv7ORKX6rkDctUOQ',
+    '__gpi': 'UID=00000e9dc25065a5:T=1721753717:RT=1721754886:S=ALNI_MY3Sr6hEf4zsjWTTGnrorvgeURjag',
+    '__eoi': 'ID=10dbf466b23c3fb1:T=1721753717:RT=1721754886:S=AA-AfjaxsGCykNeezd4FIXn9pbUt',
+    'cto_bundle': 'etfbPV8xNHlGWXk2UXloSGhIZkE5R2FiUCUyRlVXTWl4bzk1cHFuWnVMdCUyQndhYllLNFNtQ0g2emhBSmlBV0RvSWpGZ3FhN3o0alhlUEFOa3RkU0hZWHV1TUhaM0VFYXBFc0xrSzJQOUtOZTBjT0VqSEUzUWZvQmJhJTJCMmtQcmJQME4xVGJ3RjhmNk1KMkREZkRSdThyVSUyRlB3UVdkQnRZViUyRnhmYU14Q1hGSHVRRjElMkJ0VWw4b0J6ZUxlNmRwWnI1VFpwNEM4RktkWSUyQnkxJTJGbkZCNlJ2WWRiSG5iZEVuQSUzRCUzRA',
+    '_gat_auPassiveTagger': '1',
+    '_ga': 'GA1.2.1630937369.1721753717',
+    'AWSALB': 'UI0/WB1ge4yPvLnNxFoLRn4eSgv/+wJhgYBgMTJ3WGg8q0We5UJHwU11K6QV5vxxXA2py8XaIFPAmjloAZubSiuqXy1HcUlzQ7MqLLwn5vBBFp07ZP2nyw4vYc/f',
+    'AWSALBCORS': 'UI0/WB1ge4yPvLnNxFoLRn4eSgv/+wJhgYBgMTJ3WGg8q0We5UJHwU11K6QV5vxxXA2py8XaIFPAmjloAZubSiuqXy1HcUlzQ7MqLLwn5vBBFp07ZP2nyw4vYc/f',
+    '_ga_PSSTD0FYS1': 'GS1.1.1721753719.1.1.1721754901.0.0.0',
+    'FCNEC': '%5B%5B%22AKsRol86E7OxZboVLZoHIAKqB3JXw3Q8JV5rvIxFMBoJOhYrLy931Ptmz_OSgUzNtK92GC8Cc7YY12dLp7mqR3thq-UIqf2xacPYn2fmpQbzlfKluGaVSlCwt58_FrDSunfxHvJcuxL4mQFVbaoHHB01yscrTsmW6A%3D%3D%22%5D%5D',
 }
 
 headers = {
-    'authority': 'www.lyrics.com',
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-    'accept-language': 'en-US,en;q=0.9',
-    # 'cookie': 'PHPSESSID=0hcuiacvl0pskfv6un9srqtr26; _uc_referrer=https://www.reddit.com/; _gid=GA1.2.1171095024.1705076082; _au_1d=AU1D-0100-001705076154-6ECFOLBL-79RZ; DAPROPS="bS:0|scsVersion:2.4.5|bcookieSupport:1|bcss.animations:1|bcss.columns:1|bcss.transforms:1|bcss.transitions:1|sdeviceAspectRatio:1366/768|sdevicePixelRatio:1|idisplayColorDepth:24|sdownlink:5.15|seffectiveConnectionType:4g|bflashCapable:0|bhtml.audio.ogg:1|bhtml.audio.mp3:1|bhtml.audio.wav:1|bhtml.audio.m4a:1|bhtml.canvas:1|bhtml.inlinesvg:1|bhtml.svg:1|bhtml.video.ap4x:0|bhtml.video.av1:1|bhtml.video.ogg:1|bhtml.video.h264:1|bhtml.video.webm:1|bjs.accessDom:1|bjs.applicationCache:0|bjs.deviceMotion:1|bjs.geoLocation:1|bjs.indexedDB:1|bjs.json:1|bjs.localStorage:1|bjs.modifyCss:1|bjs.modifyDom:1|bjs.querySelector:1|bjs.sessionStorage:1|bjs.supportBasicJavaScript:1|bjs.supportConsoleLog:1|bjs.supportEventListener:1|bjs.supportEvents:1|bjs.webGl:1|sjs.webGlRenderer:ANGLE (Intel, Intel(R) UHD Graphics 620 (0x00005917) Direct3D11 vs_5_0 ps_5_0, D3D11)|bjs.webSockets:1|bjs.webSqlDatabase:0|bjs.webWorkers:1|bjs.xhr:1|srendererRef:0236014205|iroundTripTime:150|bsaveData:0|sscreenWidthHeight:1366/768|stimeZone:Africa/Lagos|buserMedia:1|sch.bitness:64|sch.browserFullVersionList:%22Not_A%20Brand%22%3Bv%3D%228.0.0.0%22%2C%20%22Chromium%22%3Bv%3D%22120.0.6099.217%22%2C%20%22Google%20Chrome%22%3Bv%3D%22120.0.6099.217%22|sch.browserList:%22Not_A%20Brand%22%3Bv%3D%228%22%2C%20%22Chromium%22%3Bv%3D%22120%22%2C%20%22Google%20Chrome%22%3Bv%3D%22120%22|sch.model:|sch.platform:%22Windows%22|sch.platformVersion:%2210.0.0%22|splatformArchitecture:x86|srequestingMobileUx:false|saudioRef:781311942|bmouseActivity:1bE:0"; _pbjs_userid_consent_data=3524755945110770; _lr_retry_request=true; _lr_env_src_ats=false; pbjs-unifiedid=%7B%22TDID_LOOKUP%22%3A%22FALSE%22%2C%22TDID_CREATED_AT%22%3A%222024-01-12T16%3A15%3A59%22%7D; pbjs-unifiedid_last=Fri%2C%2012%20Jan%202024%2016%3A15%3A58%20GMT; panoramaId_expiry=1705680959459; _cc_id=ec7862325a70812d471e9cfcc7d7541; panoramaId=3fd50b2552be9f3c8b632c56641916d5393802754ea4de3baefe39ebfed09b5b; _au_last_seen_pixels=eyJhcG4iOjE3MDUwNzYxNTQsInR0ZCI6MTcwNTA3NjE1NCwicHViIjoxNzA1MDc2MTU0LCJydWIiOjE3MDUwNzYxNTQsInRhcGFkIjoxNzA1MDc2MTU0LCJhZHgiOjE3MDUwNzYxNTQsImdvbyI6MTcwNTA3NjE1NCwiY29sb3NzdXMiOjE3MDUwNzYxNTQsImFkbyI6MTcwNTA3NjE1NCwiaW1wciI6MTcwNTA3NjE1NCwic21hcnQiOjE3MDUwNzYxNjUsInVucnVseSI6MTcwNTA3NjE2NSwiYW1vIjoxNzA1MDc2MTY1LCJzb24iOjE3MDUwNzYxNjUsIm9wZW54IjoxNzA1MDc2MTY1LCJiZWVzIjoxNzA1MDc2MTY1LCJ0YWJvb2xhIjoxNzA1MDc2MTY1LCJwcG50IjoxNzA1MDc2MTY1fQ%3D%3D; __gads=ID=491671c03721f7ed:T=1705076084:RT=1705078002:S=ALNI_Mb95EQmiP58KjPskiR5f2Xdkv6Unw; __gpi=UID=00000cf4b889c6c3:T=1705076084:RT=1705078002:S=ALNI_Max5q5i7BhXtGFwEUmzIhf9yRIh_Q; AWSALB=UiPlT0+nw7r6N2D5wnC6g+6ChOH/rNfBpzoCtwcUEZBxfLaY8/bVHWbAnCErROkMluxB0MCvsFtOkQR9M9kRv5sbZtU0ZZOxn5HlBp23iY6vgdTywsqwfreB0jmZ; AWSALBCORS=UiPlT0+nw7r6N2D5wnC6g+6ChOH/rNfBpzoCtwcUEZBxfLaY8/bVHWbAnCErROkMluxB0MCvsFtOkQR9M9kRv5sbZtU0ZZOxn5HlBp23iY6vgdTywsqwfreB0jmZ; _ga=GA1.2.2061274602.1705076082; _ga_PSSTD0FYS1=GS1.1.1705076081.1.1.1705078058.0.0.0; FCNEC=%5B%5B%22AKsRol8ZNeiUvUTj9R7AbP05AHOTnl6Pcd3ZCdY52vtTaph0EcPZ417Yf0QWSGS--MlYEfGSwEphuGhuAF_QA1SBACBtyfBR2B7fuvFD61DvYHJmV6NWN67BgUjE27518M6bE_HMzXv7xGmKa9T_Ub5j58ApBVhUIw%3D%3D%22%5D%2Cnull%2C%5B%5B5%2C%2281%22%5D%5D%5D',
-    'referer': 'https://www.lyrics.com/lyrics/immer%20kalt',
-    'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+    'accept-language': 'fr-FR,fr;q=0.9,de-DE;q=0.8,de;q=0.7,en-US;q=0.6,en;q=0.5',
+    'cache-control': 'max-age=0',
+    # 'cookie': 'PHPSESSID=le2qa9s7r7eg2s3ccmmm6c82pk; _gid=GA1.2.27592484.1721753720; _au_1d=AU1D-0100-001721754568-NZHKQ37C-5STF; _ga_FVWZ0RM4DH=GS1.1.1721754881.1.0.1721754881.60.0.0; _gat_gtag_UA_172613_15=1; __gads=ID=7535256d1197ccc2:T=1721753717:RT=1721754886:S=ALNI_MbMVXToGJihZPKv7ORKX6rkDctUOQ; __gpi=UID=00000e9dc25065a5:T=1721753717:RT=1721754886:S=ALNI_MY3Sr6hEf4zsjWTTGnrorvgeURjag; __eoi=ID=10dbf466b23c3fb1:T=1721753717:RT=1721754886:S=AA-AfjaxsGCykNeezd4FIXn9pbUt; cto_bundle=etfbPV8xNHlGWXk2UXloSGhIZkE5R2FiUCUyRlVXTWl4bzk1cHFuWnVMdCUyQndhYllLNFNtQ0g2emhBSmlBV0RvSWpGZ3FhN3o0alhlUEFOa3RkU0hZWHV1TUhaM0VFYXBFc0xrSzJQOUtOZTBjT0VqSEUzUWZvQmJhJTJCMmtQcmJQME4xVGJ3RjhmNk1KMkREZkRSdThyVSUyRlB3UVdkQnRZViUyRnhmYU14Q1hGSHVRRjElMkJ0VWw4b0J6ZUxlNmRwWnI1VFpwNEM4RktkWSUyQnkxJTJGbkZCNlJ2WWRiSG5iZEVuQSUzRCUzRA; _gat_auPassiveTagger=1; _ga=GA1.2.1630937369.1721753717; AWSALB=UI0/WB1ge4yPvLnNxFoLRn4eSgv/+wJhgYBgMTJ3WGg8q0We5UJHwU11K6QV5vxxXA2py8XaIFPAmjloAZubSiuqXy1HcUlzQ7MqLLwn5vBBFp07ZP2nyw4vYc/f; AWSALBCORS=UI0/WB1ge4yPvLnNxFoLRn4eSgv/+wJhgYBgMTJ3WGg8q0We5UJHwU11K6QV5vxxXA2py8XaIFPAmjloAZubSiuqXy1HcUlzQ7MqLLwn5vBBFp07ZP2nyw4vYc/f; _ga_PSSTD0FYS1=GS1.1.1721753719.1.1.1721754901.0.0.0; FCNEC=%5B%5B%22AKsRol86E7OxZboVLZoHIAKqB3JXw3Q8JV5rvIxFMBoJOhYrLy931Ptmz_OSgUzNtK92GC8Cc7YY12dLp7mqR3thq-UIqf2xacPYn2fmpQbzlfKluGaVSlCwt58_FrDSunfxHvJcuxL4mQFVbaoHHB01yscrTsmW6A%3D%3D%22%5D%5D',
+    'priority': 'u=0, i',
+    'referer': 'https://www.lyrics.com/artist.php?name=Kendrick-Lamar&aid=2412704&o=1',
+    'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
     'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
+    'sec-ch-ua-platform': '"Linux"',
     'sec-fetch-dest': 'document',
     'sec-fetch-mode': 'navigate',
     'sec-fetch-site': 'same-origin',
     'sec-fetch-user': '?1',
     'upgrade-insecure-requests': '1',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
 }
-userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 
 trans = Translator(timeout=1000000 , user_agent=userAgent)
-def compare (text1, text2):
+def compare (text1:str, text2:str) -> float:
     # Calculate the similarity ratio between two texts
     similarity_ratio = difflib.SequenceMatcher(None, text1, text2).ratio()
     return similarity_ratio
 
-def get_lyricsdotcom(url):
+def get_lyrics(url) ->str:
     response = requests.get(url, cookies=cookies, headers=headers)
         
     soup = BeautifulSoup(response.content , "html.parser")
     lyrics_tag = soup.find('pre', {'id': 'lyric-body-text'})
     return lyrics_tag.text
 
-def get_lyricsdotcom_t(url) :
-    response = requests.get(url, cookies=cookies, headers=headers)
-        
-    soup = BeautifulSoup(response.content , "html.parser")
-    lyrics_text = soup.find('pre', {'id': 'lyric-body-text'}).text
+#translated 
+def get_lyrics_t(url) :
+
+    lyrics_text = get_lyrics(url=url)
 
     verses = lyrics_text.split("\n")
     verses = [verse for verse in verses if verse.strip()]
@@ -83,24 +76,51 @@ def get_lyricsdotcom_t(url) :
 
     return result
     
-def search(query) :
-
+def get_artists(query) : 
+    artists = []
+    """ 
     data = {
-        'action': 'get_ac',
-        'term': query,
-        'type': '1',
+    'action': 'get_ac',
+    'term': f'{query}',
+    'type': '1',
     }
 
     response = requests.post('https://www.lyrics.com/gw.php', cookies=cookies, headers=headers, data=data)
-    print(response.text)
-    return response.json()
+    
+    for result in response.json() : 
+        if result['category'] == 'Artists' : 
+            artists.append((result["term"] , result["link"] , ))
+
+    return artists
+ """
+    
+    response = requests.get(f'https://www.lyrics.com/lyrics/{query}', cookies=cookies, headers=headers, )
+
+    with open("html.html", 'r', encoding='utf-8') as file:
+        html_content = file.read()
+
+
+    soup = BeautifulSoup(response.content, "html.parser")
+    
+
+    tbody = soup.find('table')
+    tds = tbody.find_all('td')
+
+    for td in tds:
+        name = td.find('a', class_='name').text
+        link = td.find('a', class_='name')['href']
+        artists.append((name , link , ))
+
+    return artists
 
 def get_top_result(query):
     response = requests.get(f'https://www.lyrics.com/lyrics/{query}', cookies=cookies, headers=headers, )
     soup = BeautifulSoup(response.content , "html.parser")
     
     tbody = soup.select_one('#content-body > div > div:nth-child(3)').find('tbody')
+    print(tbody)
     tds = tbody.find_all('td')
+    #measures similarity
     sim = 0
     print("all artist : ")
     for i  in range(0 , len(tds)) :
@@ -130,13 +150,8 @@ def get_top_result(query):
     return 'https://www.lyrics.com'+relv_song
 
 
-
-        
-
-    
-
-
-def get_songs_for(artist:str =None):
+#takes artist profile url and gives back records 
+def get_songs_for(artist:str ):
     url_comp = artist.split('/')
     m_url = f'https://www.lyrics.com/artist.php?name={url_comp[-2]}&aid={url_comp[-1]}&o=1'
     response = requests.get(m_url, cookies=cookies, headers=headers)
@@ -150,6 +165,21 @@ def get_songs_for(artist:str =None):
     
 
     return result
-#print(search("wie"))
-#print(get_songs_for("https://www.lyrics.com/artist/Nimo/2655362"))
-get_top_result("nina chuba neben mir")
+#                             [[[[[ api search (not very affective)]]]]]
+def search(query) :
+
+
+    data = {
+        'action': 'get_ac',
+        'term': query,
+        'type': '1',
+    }
+
+    response = requests.post('https://www.lyrics.com/gw.php', cookies=cookies, headers=headers, data=data)
+    print(response.text)
+    return response.json()
+
+
+print()
+for artist in get_artists("kendrick lam") : 
+    print(artist[0])

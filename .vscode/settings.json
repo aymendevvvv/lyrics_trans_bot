@@ -1,0 +1,10 @@
+{
+    "vscode_custom_css.imports": ["/home/aymen/CODING/vscss.css"],
+    "workbench.colorCustomizations": {
+   "terminalCursor.foreground": "#00ffaa"
+},
+"terminal.integrated.cursorBlinking": true,
+
+"vscode_custom_css.policy": true,
+
+}
